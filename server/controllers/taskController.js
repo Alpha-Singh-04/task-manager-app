@@ -1,4 +1,5 @@
 const Task = require("../models/Task");
+import Notification from "../models/Notification";
 
 // Create Task
 const createTask = async (req, res) => {
@@ -24,8 +25,16 @@ const createTask = async (req, res) => {
       createdBy: req.user.id,
     };
 
-    const task = await Task.create(taskData);
-    res.status(201).json(task);
+    // const task = await Task.create(taskData);
+
+    // Send notification to assigned user (if not the same as creator)
+    if (assignedTo && assignedTo !== req.user._id.toString()) {
+      await Notification.create({
+        user: assignedTo,
+        message: `You have been assigned a new task: "${title}".`,
+      });
+    }
+    res.status(201).json(taskData);
   } catch (err) {
     console.error('Task Creation Error:', err);
     res.status(500).json({ 
@@ -82,14 +91,21 @@ const getTasks = async (req, res) => {
 // Update Task
 const updateTask = async (req, res) => {
   try {
-    const taskId = req.params.id;
-    const updates = req.body;
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    const updatedTask = await Task.findByIdAndUpdate(taskId, updates, { new: true });
+    const oldAssignedTo = task.assignedTo?.toString();
 
-    if (!updatedTask) return res.status(404).json({ 
-      message: "Task not found" 
-    });
+    Object.assign(task, req.body);
+    const updatedTask = await task.save();
+
+    // If task assignment changed
+    if (req.body.assignedTo && req.body.assignedTo !== oldAssignedTo) {
+      await Notification.create({
+        user: req.body.assignedTo,
+        message: `You have been reassigned a task: "${task.title}".`,
+      });
+    }
 
     res.status(200).json(updatedTask);
   } catch (err) {
