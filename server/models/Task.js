@@ -8,8 +8,8 @@ const TaskSchema = new mongoose.Schema({
   dueDate: { type: Date, required: true },
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  isRecurring: { type: Boolean, default: false },
-  recurrenceType: { type: String, enum: ["daily", "weekly", "monthly"], default: null }
+  /*isRecurring: { type: Boolean, default: false },
+  recurrenceType: { type: String, enum: ["daily", "weekly", "monthly"], default: null }*/
 }, { timestamps: true });
 
 module.exports = mongoose.model("Task", TaskSchema);

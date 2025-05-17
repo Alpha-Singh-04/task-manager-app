@@ -11,7 +11,7 @@ const {
 // All routes below require auth
 router.use(authMiddleware);
 
-router.post("/create", createTask);
+router.post("/", createTask);
 router.get("/", getTasks);
 router.put("/:id", updateTask);
 router.delete("/:id", deleteTask);

@@ -75,7 +75,25 @@ const login = async (req, res) => {
   }
 };
 
+const getUser = async (req, res) => {
+  try{
+    const users = await User.find({}, 'name email'); // Only fetch essential fields
+    if(!users){
+      return res.status(404).json({ 
+        message: "No users found" 
+      });
+    } 
+    res.status(200).json(users);  // Return users array directly
+  }catch(err){
+    res.status(500).json({ 
+      message: "Server error", 
+      error: err.message 
+    });
+  }
+}
+
 module.exports = {
   register,
   login,
+  getUser,
 };
