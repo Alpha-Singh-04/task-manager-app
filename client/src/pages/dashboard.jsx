@@ -4,9 +4,10 @@ import TaskForm from '@/components/TaskForm';
 import TaskCard from '@/components/TaskCard';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import TaskFilters from '@/components/TaskFilters';
 
 export default function DashboardPage() {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, loading:authLoading } = useAuth();
   const router = useRouter();
 
   const [tasks, setTasks] = useState([]);
@@ -15,6 +16,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [filters, setFilters] = useState({});
 
   // Fetch all users (for assignment dropdown)
   const fetchUsers = async () => {
@@ -43,10 +45,19 @@ export default function DashboardPage() {
       const res = await fetch('http://localhost:5000/api/tasks', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      setTasks(data);
-      setError('');
+
+      if (!res.ok) {
+        throw new Error(`HTTP Error: ${res.status} ${res.statusText}`);
+      }
+
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        setTasks(data);
+        setError('');
+      } else {
+        throw new Error('Expected JSON response, but got something else.');
+      }
     } catch (err) {
       console.error('Task Fetch Error:', err.message);
       setError('Failed to load tasks');
@@ -54,6 +65,8 @@ export default function DashboardPage() {
       setLoading(false);
     }
   };
+
+
 
   // Create or update task
   const handleTaskSubmit = async formData => {
@@ -124,14 +137,47 @@ export default function DashboardPage() {
     setIsFormVisible(false);
   };
 
+  const fetchFilteredTasks = async (filters) => {
+    try {
+      const query = new URLSearchParams(filters).toString();
+      // Update the URL to point to your backend
+      const res = await fetch(`http://localhost:5000/api/tasks?${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setTasks(data.tasks); // or update however you're storing task state
+    } catch (err) {
+      console.error('Failed to fetch filtered tasks', err);
+    }
+  };
+
+
+  // Handle filter changes
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    fetchFilteredTasks(newFilters);
+  }
+
   useEffect(() => {
+    // wait for auth to finish loading
+    if (authLoading) return;
+
+    // if no token after auth has loaded, redirect to login
     if (!token) {
-      router.push('/login');
+      router.push('/auth/login');
       return;
     }
     fetchTasks();
     fetchUsers();
-  }, [token, router]);
+  }, [token, router, authLoading]);
+
+  if(authLoading){
+    return(
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
@@ -181,8 +227,12 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-800">Your Tasks</h2>
           <div className="text-sm text-gray-600">
-            {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} found
+            {tasks?.length || 0} {tasks?.length === 1 ? 'task' : 'tasks'} found
           </div>
+        </div>
+
+        <div id="task-form" className={`transition-all duration-300 $ max-h-[800px] opacity-100 `}>
+          <TaskFilters onFilterChange={handleFilterChange} />
         </div>
 
         {loading ? (
@@ -191,13 +241,13 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
-            {tasks.length === 0 && !loading && (
+            {tasks?.length === 0 && !loading && (
               <div className="bg-gray-50 p-6 text-center rounded-lg shadow-sm">
                 <p className="text-gray-500">No tasks found. Create a new task to get started!</p>
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {tasks.map(task => (
+              {tasks?.map(task => (
                 <TaskCard
                   key={task._id}
                   task={task}

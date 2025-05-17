@@ -38,11 +38,28 @@ const createTask = async (req, res) => {
 // Get Tasks (createdBy or assignedTo)
 const getTasks = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const { search, status, priority, dueDate } = req.query;
+    const query = { 
+      $or: [
+        { createdBy: req.user.id }, 
+        { assignedTo: req.user.id }
+      ]
+    };
 
-    const tasks = await Task.find({
-      $or: [{ createdBy: userId }, { assignedTo: userId }],
-    }).sort({ dueDate: 1 });
+    if (search) {
+      query.$and = [{
+        $or: [
+          { title: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } }
+        ]
+      }];
+    }
+
+    if (status) query.status = status;
+    if (priority) query.priority = priority;
+    if (dueDate) query.dueDate = new Date(dueDate); // ISO format
+
+    const tasks = await Task.find(query).populate('assignedTo', 'name').sort({ dueDate: 1 });
 
     res.status(200).json(tasks);
   } catch (err) {

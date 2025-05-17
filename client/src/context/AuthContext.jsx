@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState('');
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -15,6 +16,7 @@ export const AuthProvider = ({ children }) => {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
     }
+    setLoading(false);
   }, []);
 
   const login = (token, user) => {
@@ -30,11 +32,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     setToken('');
     setUser(null);
-    router.push('/auth/login');
+    router.replace('/');
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
