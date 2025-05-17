@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import TaskFilters from '@/components/TaskFilters';
 import Header from '@/common/Header';
+import socket from '@/utils/socket';
 
 export default function DashboardPage() {
   const { user, token, logout, loading:authLoading } = useAuth();
@@ -177,6 +178,18 @@ export default function DashboardPage() {
     fetchTasks();
     fetchUsers();
   }, [token, router, authLoading]);
+
+  useEffect(() => {
+    socket.on('taskAssigned', (data) => {
+      if (data.assignedTo === currentUserId) {
+        alert(data.message); // Or show toast, badge, etc.
+      }
+    });
+
+    return () => {
+      socket.off('taskAssigned');
+    };
+  }, []);
 
   if(authLoading){
     return(

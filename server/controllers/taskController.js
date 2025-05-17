@@ -36,6 +36,12 @@ const createTask = async (req, res) => {
       });
     }
 
+    _io.emit('taskAssigned', {
+      taskId: task._id,
+      assignedTo: task.assignedTo,
+      message: `A new task "${task.title}" was assigned to you.`,
+    });
+
     res.status(201).json(task);
   } catch (err) {
     console.error('Task Creation Error:', err);

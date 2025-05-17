@@ -1,4 +1,6 @@
 const express = require("express");
+const http = require('http');
+const { Server } = require('socket.io');
 const dotenv = require("dotenv");
 const cors = require("cors");
 const connectDB = require("./config/db");
@@ -18,6 +20,27 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+const server = http.createServer(app);
+
+// Set up Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: '*', // Replace with frontend URL if needed
+    methods: ['GET', 'POST'],
+  }
+});
+
+// Store io reference for emitting notifications later
+global._io = io;
+
+// On connection
+io.on('connection', (socket) => {
+  console.log('⚡ New client connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('❌ Client disconnected:', socket.id);
+  });
+});
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -47,6 +70,6 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
