@@ -55,14 +55,23 @@ const getTasks = async (req, res) => {
       }];
     }
 
-    if (status) query.status = status;
-    if (priority) query.priority = priority;
-    if (dueDate) query.dueDate = new Date(dueDate); // ISO format
+    if (status) query.status = status.toLowerCase();
+    if (priority) query.priority = priority.toLowerCase();
+    if (dueDate) {
+      const startDate = new Date(dueDate);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(dueDate);
+      endDate.setHours(23, 59, 59, 999);
+      query.dueDate = { $gte: startDate, $lte: endDate };
+    }
 
-    const tasks = await Task.find(query).populate('assignedTo', 'name').sort({ dueDate: 1 });
+    const tasks = await Task.find(query)
+      .populate('assignedTo', 'name')
+      .sort({ dueDate: 1 });
 
     res.status(200).json(tasks);
   } catch (err) {
+    console.error('Task Fetch Error:', err);
     res.status(500).json({ 
       message: "Error fetching tasks", 
       error: err.message 

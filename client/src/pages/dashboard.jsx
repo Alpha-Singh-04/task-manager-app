@@ -140,14 +140,20 @@ export default function DashboardPage() {
   const fetchFilteredTasks = async (filters) => {
     try {
       const query = new URLSearchParams(filters).toString();
-      // Update the URL to point to your backend
       const res = await fetch(`http://localhost:5000/api/tasks?${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP Error: ${res.status} ${res.statusText}`);
+      }
+
       const data = await res.json();
-      setTasks(data.tasks); // or update however you're storing task state
+      setTasks(data); // The API returns the tasks array directly
+      setError('');
     } catch (err) {
-      console.error('Failed to fetch filtered tasks', err);
+      console.error('Failed to fetch filtered tasks:', err);
+      setError('Failed to fetch filtered tasks');
     }
   };
 
@@ -156,7 +162,7 @@ export default function DashboardPage() {
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
     fetchFilteredTasks(newFilters);
-  }
+  };
 
   useEffect(() => {
     // wait for auth to finish loading
