@@ -1,12 +1,13 @@
 import { useNotifications } from '@/context/NotificationContext';
 import { Bell } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 const NotificationBell = () => {
   const { notifications, markAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <div className="relative">
@@ -30,7 +31,7 @@ const NotificationBell = () => {
               <li
                 key={n._id}
                 className={`p-2 text-sm border-b cursor-pointer ${
-                  n.read ? 'text-gray-500' : 'font-semibold text-black'
+                  n.isRead ? 'text-gray-500' : 'font-semibold text-black'
                 }`}
                 onClick={() => markAsRead(n._id)}
               >
@@ -44,4 +45,32 @@ const NotificationBell = () => {
   );
 };
 
-export default NotificationBell;
+const Header = ({ onAddTask, isFormVisible }) => {
+  const { user, logout } = useAuth();
+
+  return (
+    <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-800">Task Dashboard</h1>
+        {user && <p className="text-gray-600">Welcome, {user.name}</p>}
+      </div>
+      <div className="flex items-center gap-3">
+        <NotificationBell />
+        <button 
+          onClick={onAddTask} 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200"
+        >
+          {isFormVisible ? 'Hide Form' : 'Add New Task'}
+        </button>
+        <button 
+          onClick={logout} 
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md transition duration-200"
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Header;

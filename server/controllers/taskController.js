@@ -1,5 +1,5 @@
 const Task = require("../models/Task");
-import Notification from "../models/Notification";
+const Notification = require("../models/Notification");
 
 // Create Task
 const createTask = async (req, res) => {
@@ -25,16 +25,18 @@ const createTask = async (req, res) => {
       createdBy: req.user.id,
     };
 
-    // const task = await Task.create(taskData);
+    const task = await Task.create(taskData);
 
     // Send notification to assigned user (if not the same as creator)
-    if (assignedTo && assignedTo !== req.user._id.toString()) {
+    if (assignedTo && assignedTo !== req.user.id.toString()) {
       await Notification.create({
         user: assignedTo,
         message: `You have been assigned a new task: "${title}".`,
+        task: task._id
       });
     }
-    res.status(201).json(taskData);
+
+    res.status(201).json(task);
   } catch (err) {
     console.error('Task Creation Error:', err);
     res.status(500).json({ 

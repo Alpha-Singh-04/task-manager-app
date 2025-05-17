@@ -5,6 +5,7 @@ import TaskCard from '@/components/TaskCard';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import TaskFilters from '@/components/TaskFilters';
+import Header from '@/common/Header';
 
 export default function DashboardPage() {
   const { user, token, logout, loading:authLoading } = useAuth();
@@ -187,26 +188,10 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Task Dashboard</h1>
-          {user && <p className="text-gray-600">Welcome, {user.name}</p>}
-        </div>
-        <div className="flex gap-3">
-          <button 
-            onClick={() => setIsFormVisible(!isFormVisible)} 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200"
-          >
-            {isFormVisible ? 'Hide Form' : 'Add New Task'}
-          </button>
-          <button 
-            onClick={logout} 
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md transition duration-200"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+      <Header 
+        onAddTask={() => setIsFormVisible(!isFormVisible)}
+        isFormVisible={isFormVisible}
+      />
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
@@ -248,17 +233,17 @@ export default function DashboardPage() {
         ) : (
           <>
             {tasks?.length === 0 && !loading && (
-              <div className="bg-gray-50 p-6 text-center rounded-lg shadow-sm">
-                <p className="text-gray-500">No tasks found. Create a new task to get started!</p>
+              <div className="text-center py-8 text-gray-500">
+                No tasks found. Create your first task!
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-4">
               {tasks?.map(task => (
                 <TaskCard
                   key={task._id}
                   task={task}
                   onEdit={() => handleEdit(task)}
-                  onDelete={handleDelete}
+                  onDelete={() => handleDelete(task._id)}
                 />
               ))}
             </div>
